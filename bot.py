@@ -12,6 +12,7 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
 data = DbDispatcher('data.db')
 urls = DbDispatcher('urls.db')
+logging.basicConfig(level=logging.INFO)
 
 
 @dp.message_handler(commands=['start'])
@@ -35,3 +36,14 @@ async def get_words(message: types.Message):
 @dp.message_handler(commands=['add_url'])
 async def add_url(message: types.Message):
     pass
+
+
+async def shutdown(dispatcher: Dispatcher):
+    data.close_connection()
+    urls.close_connection()
+    await dispatcher.storage.close()
+    await dispatcher.storage.wait_closed()
+
+
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True, on_shutdown=shutdown)
