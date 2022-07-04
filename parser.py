@@ -3,12 +3,8 @@ import string
 import requests
 from bs4 import BeautifulSoup
 
+from config import HEADERS
 from db_dispatcher import DbDispatcher
-
-HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) '
-                  'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Mobile Safari/537.36',
-    'Accept': '*/*'}
 
 
 def get_data():
