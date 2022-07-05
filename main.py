@@ -14,5 +14,8 @@ data = ["On display? I eventually had to go down to the cellar to find them.",
           "Yes, said Arthur, yes I did. It was on display in the bottom of a locked filing cabinet stuck in a disused lavatory with a sign on the door saying 'Beware of the Leopard'"]
 
 translator = Translator(to_lang="ru")
+
+# Сделать запись в бд
+
 for phrase in data:
     print(f'{phrase}\t{translator.translate(phrase)}')
