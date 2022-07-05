@@ -4,6 +4,7 @@ from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from config import TOKEN
 from db_dispatcher import DbDispatcher
+from states import AddUrl
 
 from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputFile
@@ -23,7 +24,8 @@ async def start(message: types.Message):
 async def help(message: types.Message):
     await message.answer(
         '/get_words - выдаёт список слов из бд\n'
-        '/add_url - возможность добавить ссылку на документацию\n')
+        '/add_url - возможность добавить ссылку на документацию\n'
+        '/get_urls - выдаёт список введённых ссылок')
 
 
 @dp.message_handler(commands=['get_words'])
@@ -34,4 +36,20 @@ async def get_words(message: types.Message):
 
 @dp.message_handler(commands=['add_url'])
 async def add_url(message: types.Message):
-    pass
+    await AddUrl.url.set()
+    await message.answer('Введите ссылку на документацию')
+
+
+@dp.message_handler(state=AddUrl.url)
+async def write_url(message: types.Message):
+    try:
+        urls.write_data({'name': 'test', 'url': message.text}, 'urls')
+        await message.answer('Запись прошла успешно')
+    except Exception as e:
+        await message.answer(f'Что-то пошло не так\nОшибка: {e}')
+
+
+@dp.message_handler(commands=['get_urls'])
+async def get_urls(message: types.Message):
+    arr = [f'{item[1]}: {item[2]}' for item in urls.read_all_data('urls')]
+    await message.answer('\n'.join(arr))
