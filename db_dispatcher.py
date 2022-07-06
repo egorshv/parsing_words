@@ -62,6 +62,7 @@ class DbDispatcher:
     def delete_data(self, table):
         q = f"""DELETE from {table}"""
         self.cur.execute(q)
+        self.con.commit()
 
     def close_connection(self):
         self.con.close()
