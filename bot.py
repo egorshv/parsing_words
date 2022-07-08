@@ -4,9 +4,10 @@ from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from config import TOKEN
 from db_dispatcher import DbDispatcher
-from states import AddUrl
+from states import AddUrl, GenerateFile
 from parser import get_data
 from data_writing import write_data
+import csv
 
 from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputFile
@@ -15,6 +16,7 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
 data = DbDispatcher('data.db')
 urls = DbDispatcher('urls.db')
+logging.basicConfig(level=logging.INFO)
 
 
 @dp.message_handler(commands=['start'])
@@ -27,7 +29,8 @@ async def help(message: types.Message):
     await message.answer(
         '/get_words - выдаёт список слов из бд\n'
         '/add_url - возможность добавить ссылку на документацию\n'
-        '/get_urls - выдаёт список введённых ссылок')
+        '/get_urls - выдаёт список введённых ссылок\n'
+        '/generate_file - генерирует csv файл вида \"word1\";\"translation1\"')
 
 
 @dp.message_handler(commands=['get_words'])
@@ -37,7 +40,7 @@ async def get_words(message: types.Message):
         n = 0
         while n < len(words):
             await message.answer('\n'.join(words[n:n + 100]))
-            n += 100
+            n += 50
     else:
         await message.answer('Слов пока нет')
 
@@ -46,6 +49,25 @@ async def get_words(message: types.Message):
 async def add_url(message: types.Message):
     await AddUrl.url.set()
     await message.answer('Введите название и ссылку на документацию через пробел')
+
+
+@dp.message_handler(commands=['generate_file'])
+async def generate_file(message: types.Message):
+    await GenerateFile.name.set()
+    await message.answer('Введите название файла')
+
+
+@dp.message_handler(state=GenerateFile.name)
+async def create_file(message: types.Message, state: FSMContext):
+    name = message.text
+    words = [[item[1], item[2]] for item in data.read_all_data('data')]
+    with open(f'{name}.csv', 'w', encoding='utf-8') as f:
+        writer = csv.writer(f, delimiter=';')
+        writer.writerows(words)
+    chat_id = message.chat.id
+    with open(f'{name}.csv', 'r', encoding='utf-8') as f:
+        await bot.send_document(chat_id, ('filename.txt', f))
+        await state.finish()
 
 
 @dp.message_handler(state=AddUrl.url)
